@@ -27,7 +27,7 @@ imageNameList = {'BSDS30c'}; % {'BSDS1c', 'BSDS2c', ... }
 imageFormat = "png";
 dim = 3; % the number of color channels of original image
 
-cropSize = 30; % trimming size (square) *should be power of 3 for STV
+cropSize = 48; % trimming size (square) *should be a multiple of 3 for STV
 cropPoints = {[128,128]}; % trimming point (left upper corner) {[y,x], [y,x], ... }
 
 % Do you load noisy images already generated?
@@ -38,7 +38,7 @@ noisyImage_path = "..."; % should be without imageName and extension
 % degradation setting
 noiseType = 'gaussian'; % 3mode: none, sparse, gaussian
 noise_sigma = 0.1;
-problemType = 'none'; % 3mode: none, missing, missingNoiselet
+problemType = 'none'; % 1mode: none
 missrate = 0; % percentage of missing entries
 
 
@@ -71,6 +71,15 @@ para.maxiter = 20000; % maximum number of iteration
 para.stopcri = 1.0e-3; % stopping criterion
 para.problemType = problemType;
 
+useGPU = true; % true: use GPU, false: use CPU to execute.
+try
+    gpu = gpuDevice();
+    disp('GPU is available:');
+    disp(gpu.Name);
+catch
+    disp('No GPU available or GPU is not supported.');
+    useGPU = false;
+end
 
 % %-----------------------------------------------------
 % % Overwhite settings for debug
@@ -234,26 +243,41 @@ subplot(121), imshow(u_org), title('original');
 subplot(122), imshow(u_obsv_mat), title('observed');
 
 
-%--------------------
-% begin GPU
-%--------------------
-disp("move data to GPU")
-u_obsv = gpuArray(u_obsv);
-% u_obsv = gpuArray(single(u_obsv));
-% u_obsv_mat = gpuArray(single(u_obsv_mat));
-A = gpuArray(A);
+if useGPU
+    %--------------------
+    % begin GPU
+    %--------------------
+    disp("move data to GPU")
+    u_obsv = gpuArray(u_obsv);
+    % u_obsv = gpuArray(single(u_obsv));
+    % u_obsv_mat = gpuArray(single(u_obsv_mat));
+    A = gpuArray(A);
 
-%--------------------
-% define function
-%--------------------
-methodFunc{1} = @(p, ref) DVTV_GPU(u_obsv_mat, Phi, Phit, p, u_org);
-methodFunc{2} = @(p, ref) LiGME_DVTV_GPU(u_obsv, A, p, u_org, true);
-methodFunc{3} = @(p, ref) ERLiGME_DVTV_GPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,1));
-methodFunc{4} = @(p, ref) STV_GPU(u_obsv_mat, Phi, Phit, p, u_org);
-methodFunc{5} = @(p, ref) LiGME_STV_GPU(u_obsv, A, p, u_org, true);
-methodFunc{6} = @(p, ref) ERLiGME_STV_GPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,4));
-methodFunc{7} = @(p, ref) ERLiGME_DSTV_GPU(u_obsv, Phi, Phit, p, u_org, false);
-methodFunc{8} = @(p, ref) ERLiGME_DSTV_GPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,7));
+    %--------------------
+    % define function
+    %--------------------
+    methodFunc{1} = @(p, ref) DVTV_GPU(u_obsv_mat, Phi, Phit, p, u_org);
+    methodFunc{2} = @(p, ref) LiGME_DVTV_GPU(u_obsv, A, p, u_org, true);
+    methodFunc{3} = @(p, ref) ERLiGME_DVTV_GPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,1));
+    methodFunc{4} = @(p, ref) STV_GPU(u_obsv_mat, Phi, Phit, p, u_org);
+    methodFunc{5} = @(p, ref) LiGME_STV_GPU(u_obsv, A, p, u_org, true);
+    methodFunc{6} = @(p, ref) ERLiGME_STV_GPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,4));
+    methodFunc{7} = @(p, ref) ERLiGME_DSTV_GPU(u_obsv, Phi, Phit, p, u_org, false);
+    methodFunc{8} = @(p, ref) ERLiGME_DSTV_GPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,7));
+else
+    % use CPU
+    %--------------------
+    % define function
+    %--------------------
+    methodFunc{1} = @(p, ref) DVTV_CPU(u_obsv_mat, Phi, Phit, p, u_org);
+    methodFunc{2} = @(p, ref) LiGME_DVTV_CPU(u_obsv, A, p, u_org, true);
+    methodFunc{3} = @(p, ref) ERLiGME_DVTV_CPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,1));
+    methodFunc{4} = @(p, ref) STV_CPU(u_obsv_mat, Phi, Phit, p, u_org);
+    methodFunc{5} = @(p, ref) LiGME_STV_CPU(u_obsv, A, p, u_org, true);
+    methodFunc{6} = @(p, ref) ERLiGME_STV_CPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,4));
+    methodFunc{7} = @(p, ref) ERLiGME_DSTV_CPU(u_obsv, Phi, Phit, p, u_org, false);
+    methodFunc{8} = @(p, ref) ERLiGME_DSTV_CPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,7));
+end
 
 
 %====================================================
@@ -285,17 +309,18 @@ end % next method
 end % next mu
 %====================================================
 
-%--------------------
-% end GPU
-%--------------------
-disp("gather data from GPU")
-% u_obsv = gather(u_obsv);
-% u_obsv_mat = gather(u_obsv_mat);
-% A = gather(A);
-% reset(gpuDevice);
+if useGPU
+    %--------------------
+    % end GPU
+    %--------------------
+    disp("gather data from GPU")
+    % u_obsv = gather(u_obsv);
+    % u_obsv_mat = gather(u_obsv_mat);
+    % A = gather(A);
+    % reset(gpuDevice);
+end
 
 clear("A", "u_obsv", "u_obsv_mat");
-diary off
 close all
 
 end % next experiment (change noise)

@@ -69,6 +69,15 @@ para.maxiter = 20000; % maximum number of iteration
 para.stopcri = 1.0e-3; % stopping criterion
 para.problemType = problemType;
 
+useGPU = true; % true: use GPU, false: use CPU to execute.
+try
+    gpu = gpuDevice();
+    disp('GPU is available:');
+    disp(gpu.Name);
+catch
+    disp('No GPU available or GPU is not supported.');
+    useGPU = false;
+end
 
 % %-----------------------------------------------------
 % % Overwhite settings for debug
@@ -225,6 +234,7 @@ if ~load_noisyImage
 
         Phi = @(z) z.*OMind;
         Phit = @(z) z.*OMind;
+
         noise = noise.*OMind;
 
         A_op2 = 1; % || A'*A ||_op
@@ -235,15 +245,7 @@ if ~load_noisyImage
         OM = dr(1:mesnum);
         OMind = zeros(rows, cols, dim);
         OMind(OM) = 1;
-
-        % use GPU
         OMind = single(OMind);
-        OMind = gpuArray(OMind);
-        % % use CPU
-        % OMind_CPU = single(OMind);
-        % OMind = 0; % avoid null error
-        % Phi_CPU = @(z) single(func_Noiselet(double(z))).*OMind_CPU;
-        % Phit_CPU = @(z) single(func_NoiseletTrans(double(z.*OMind_CPU)));
         
         % % explicit definition for LiGME
         % DownSamplingMatrix = reshape(OMind, [numel(OMind), 1]);
@@ -254,8 +256,17 @@ if ~load_noisyImage
         % end
         % A = DownSamplingMatrix*Noiseletmatrix;
 
-        Phi = @(z) gpuArray( single(func_Noiselet(double(gather(z)))) ).*OMind;
-        Phit = @(z) gpuArray( single(func_NoiseletTrans(double(gather(z.*OMind)))) );
+        if useGPU
+            % use GPU
+            OMind = gpuArray(OMind);
+            Phi = @(z) gpuArray( single(func_Noiselet(double(gather(z)))) ).*OMind;
+            Phit = @(z) gpuArray( single(func_NoiseletTrans(double(gather(z.*OMind)))) );
+        else
+            % use CPU
+            Phi = @(z) single(func_Noiselet(double(z))).*OMind;
+            Phit = @(z) single(func_NoiseletTrans(double(z.*OMind)));
+        end
+
         noise = noise.*OMind;
 
         A_op2 = 1; % || A'*A ||_op
@@ -268,10 +279,20 @@ if ~load_noisyImage
 
     save(sprintf('%s/mat/%s/%02d/u_obsv.mat', currentDir, imageName, exNumber), ...
         "u_obsv", "Phi", "Phit", "A_op2", "noise", "noise_sigma");
+
+    if strcmp(problemType,'missing') || strcmp(problemType,'missingNoiselet')
+        save(sprintf('%s/mat/%s/%02d/u_obsv.mat', currentDir, imageName, exNumber), ...
+        "OMind", "-append");
+    end
 else
     % Load image
     load(sprintf('%s/%s/%02d/u_obsv.mat', noisyImage_path, imageName, exNumber), ...
         "u_obsv", "Phi", "Phit", "A_op2", "noise", "noise_sigma");
+
+    if strcmp(problemType,'missing') || strcmp(problemType,'missingNoiselet')
+        load(sprintf('%s/%s/%02d/u_obsv.mat', noisyImage_path, imageName, exNumber), ...
+            "OMind");
+    end
 end
 PSNR_obsv(imageID, exNumber) = psnr(u_org, gather(Phit(u_obsv)), 1);
 SSIM_obsv(imageID, exNumber) = ssim(u_org, gather(Phit(u_obsv)), 'DynamicRange', 1);
@@ -284,29 +305,39 @@ figure
 subplot(121), imshow(u_org), title('original');
 subplot(122), imshow(gather(Phit(u_obsv))), title('observed');
 
-%--------------------
-% begin GPU
-%--------------------
-disp("Loading GPU device...")
-% A = gpuArray(A);
-u_obsv = gpuArray(u_obsv);
 
-%--------------------
-% define function
-%--------------------
-methodFunc{1} = @(p, ref) DVTV_GPU(u_obsv, Phi, Phit, p, u_org);
-methodFunc{2} = @(p, ref) ERLiGME_DVTV_GPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,1));
-methodFunc{3} = @(p, ref) STV_GPU(u_obsv, Phi, Phit, p, u_org);
-methodFunc{4} = @(p, ref) ERLiGME_STV_GPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,3));
-methodFunc{5} = @(p, ref) ERLiGME_DSTV_GPU(u_obsv, Phi, Phit, p, u_org, false);
-methodFunc{6} = @(p, ref) ERLiGME_DSTV_GPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,5));
+if useGPU
+    %--------------------
+    % begin GPU
+    %--------------------
+    disp("Loading GPU device...")
+    u_obsv = gpuArray(u_obsv);
+    % A = gpuArray(A);
+    if strcmp(problemType,'missing') || strcmp(problemType,'missingNoiselet')
+        OMind = gpuArray(OMind);
+    end
 
-% % use CPU
-% methodFunc{2} = @(p, ref) ERLiGME_DVTV_CPU(u_obsv, Phi_CPU, Phit_CPU, p, u_org, true, ref(:,:,:,1));
-% methodFunc{3} = @(p, ref) STV_CPU(gather(u_obsv), Phi_CPU, Phit_CPU, p, u_org);
-% methodFunc{4} = @(p, ref) ERLiGME_STV_CPU(gather(u_obsv), Phi_CPU, Phit_CPU, p, u_org, true, ref(:,:,:,3));
-% methodFunc{5} = @(p, ref) ERLiGME_DSTV_CPU(gather(u_obsv), Phi_CPU, Phit_CPU, p, u_org, false);
-% methodFunc{6} = @(p, ref) ERLiGME_DSTV_CPU(gather(u_obsv), Phi_CPU, Phit_CPU, p, u_org, true, ref(:,:,:,5));
+    %--------------------
+    % define function
+    %--------------------
+    methodFunc{1} = @(p, ref) DVTV_GPU(u_obsv, Phi, Phit, p, u_org);
+    methodFunc{2} = @(p, ref) ERLiGME_DVTV_GPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,1));
+    methodFunc{3} = @(p, ref) STV_GPU(u_obsv, Phi, Phit, p, u_org);
+    methodFunc{4} = @(p, ref) ERLiGME_STV_GPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,3));
+    methodFunc{5} = @(p, ref) ERLiGME_DSTV_GPU(u_obsv, Phi, Phit, p, u_org, false);
+    methodFunc{6} = @(p, ref) ERLiGME_DSTV_GPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,5));
+else
+    % use CPU
+    %--------------------
+    % define function
+    %--------------------
+    methodFunc{1} = @(p, ref) DVTV_CPU(u_obsv, Phi, Phit, p, u_org);
+    methodFunc{2} = @(p, ref) ERLiGME_DVTV_CPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,1));
+    methodFunc{3} = @(p, ref) STV_CPU(u_obsv, Phi, Phit, p, u_org);
+    methodFunc{4} = @(p, ref) ERLiGME_STV_CPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,3));
+    methodFunc{5} = @(p, ref) ERLiGME_DSTV_CPU(u_obsv, Phi, Phit, p, u_org, false);
+    methodFunc{6} = @(p, ref) ERLiGME_DSTV_CPU(u_obsv, Phi, Phit, p, u_org, true, ref(:,:,:,5));
+end
 
 
 %====================================================
@@ -338,17 +369,19 @@ end % next method
 end % next mu
 %====================================================
 
-%--------------------
-% end GPU
-%--------------------
-disp("gather data from GPU")
-u_obsv = gather(u_obsv);
-if strcmp(problemType,'missing') || strcmp(problemType,'missingNoiselet')
-    OMind = gather(OMind);
+if useGPU
+    %--------------------
+    % end GPU
+    %--------------------
+    disp("gather data from GPU")
+    u_obsv = gather(u_obsv);
+    if strcmp(problemType,'missing') || strcmp(problemType,'missingNoiselet')
+        OMind = gather(OMind);
+    end
+    % reset(gpuDevice);
 end
-diary off
+
 close all
-% reset(gpuDevice);
 
 end % next experiment (change noise)
 

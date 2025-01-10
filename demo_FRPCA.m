@@ -41,7 +41,7 @@ noisyImage_path = "..."; % should be without imageName and extension
 % degradation setting
 noiseType = 'sparse'; % 3mode: none, sparse, gaussian
 noise_sigma = 0.05;
-problemType = 'RPCA_none'; % 4mode: none, missing, missingNoiselet, RPCA_none
+problemType = 'RPCA_none'; % 1mode: RPCA_none
 missrate = 0;         % percentage of missing entries
 
 
@@ -65,7 +65,7 @@ para.extendZ = @(rho) calculate_extendRate(rho, extend_weight);
 %-----------------------------------------------------
 % training variables
 %-----------------------------------------------------
-exNumber_max = 10; % repeat number for each image
+exNumber_max = 1; % number of repetitions with a different noise seed
 para.maxiter = 10000; % maximum number of iteration
 para.stopcri = 1.0e-5; % stopping criterion
 para.problemType = problemType;
@@ -252,6 +252,8 @@ subplot(121), meshz(u_org), zlim([-0.15 1.15]), title('original');
 subplot(122), meshz(u_obsv), zlim([-0.15 1.15]), title('observed');
 
 
+% Since performing singular value decomposition (SVD) on a GPU is time-consuming,
+% this code will be executed on the CPU instead.
 % %--------------------
 % % begin GPU
 % %--------------------

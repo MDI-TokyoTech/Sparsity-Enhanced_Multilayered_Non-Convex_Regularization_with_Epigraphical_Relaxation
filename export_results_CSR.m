@@ -35,7 +35,9 @@ destDir = executeMfilename; % output folder name
 timeStr = extractBetween(sourceDir, strlength(sourceDir)-9, strlength(sourceDir));
 dayStr = extractBetween(sourceDir, strlength(sourceDir)-18, strlength(sourceDir)-11);
 outDir = sprintf("output/%s/%s/%s", destDir, dayStr{1}, timeStr{1});
-mkdir(sprintf("%s/fig", outDir));
+if ~exist(sprintf("%s/figs", outDir), "dir")
+    mkdir(sprintf("%s/figs", outDir));
+end
 
 dim = 3; % Max value of dimension
 u_org_buf = zeros(cropSize, cropSize, dim, imageNum); % buffer
@@ -45,7 +47,9 @@ u_opt_buf = zeros(cropSize, cropSize, dim, imageNum, methodNum, muNum, exNumber_
 for imageID = 1:imageNum
     fprintf("Loading %s...\n", imageNameList{imageID});
 
-    mkdir(sprintf("%s/images/%s", outDir, imageNameList{imageID}));
+    if ~exist(sprintf("%s/images/%s", outDir, imageNameList{imageID}), "dir")
+        mkdir(sprintf("%s/images/%s", outDir, imageNameList{imageID}));
+    end
 
     u_org = im2single(imread(strcat(imageFolder, imageNameList{imageID}, '.', imageFormat)));
     cropPoint = cropPoints{imageID};
@@ -158,7 +162,7 @@ for imageID = 1:imageNum
 
     graphImageName = sprintf('%s/images/%s/PSNR.png', outDir, imageNameList{imageID});
     saveas(PSNRgraphs, graphImageName)
-    graphImageName = sprintf('%s/fig/%s_PSNR.fig', outDir, imageNameList{imageID});
+    graphImageName = sprintf('%s/figs/%s_PSNR.fig', outDir, imageNameList{imageID});
     saveas(PSNRgraphs, graphImageName)
     
     close(PSNRgraphs);
@@ -205,7 +209,7 @@ end
 lgd = legend(methodNameModified,'interpreter','none');
 lgd.Layout.Tile = 'west';
 saveas(f, sprintf('%s/comparePSNR.png', outDir));
-saveas(f, sprintf('%s/fig/comparePSNR.fig', outDir));
+saveas(f, sprintf('%s/figs/comparePSNR.fig', outDir));
 % close(f)
 
 
@@ -253,7 +257,7 @@ for imageID = 1:imageNum
 
     graphImageName = sprintf('%s/images/%s/SSIM.png', outDir, imageNameList{imageID});
     saveas(PSNRgraphs, graphImageName)
-    graphImageName = sprintf('%s/fig/%s_SSIM.fig', outDir, imageNameList{imageID});
+    graphImageName = sprintf('%s/figs/%s_SSIM.fig', outDir, imageNameList{imageID});
     saveas(PSNRgraphs, graphImageName)
 
     close(PSNRgraphs);
@@ -300,7 +304,7 @@ end
 lgd = legend(methodName,'interpreter','none');
 lgd.Layout.Tile = 'west';
 saveas(f, sprintf('%s/compareSSIM.png', outDir));
-saveas(f, sprintf('%s/fig/compareSSIM.fig', outDir));
+saveas(f, sprintf('%s/figs/compareSSIM.fig', outDir));
 % close(f)
 
 % optimized images for each mu
@@ -377,8 +381,8 @@ for imageID = 1:imageNum
         hold off
 
         saveas(f, sprintf('%s/images/%s/Histgram(Dx)_%s.png', outDir, imageNameList{imageID}, methodName{methodID}))
-        saveas(f, sprintf('%s/fig/%s_%d_Histgram(Dx)_%s.fig', outDir, imageNameList{imageID}, shown_exNumID, methodName{methodID}))
-        % print(f, '-depsc', sprintf('%s/fig/image%d_%d_Histgram(Dx)_%s.eps', outdir, imageID, shown_exNumID, methodName{methodID}))
+        saveas(f, sprintf('%s/figs/%s_%d_Histgram(Dx)_%s.fig', outDir, imageNameList{imageID}, shown_exNumID, methodName{methodID}))
+        % print(f, '-depsc', sprintf('%s/figs/image%d_%d_Histgram(Dx)_%s.eps', outdir, imageID, shown_exNumID, methodName{methodID}))
         close(f)
     end
 end
@@ -435,6 +439,6 @@ for imageID = 1:imageNum
     lgd = legend("Ground truth", "Estimated");
     lgd.Layout.Tile = "north";
     saveas(f, sprintf('%s/%s_%d_Histgram(Dx).png', outDir, imageNameList{imageID}, shown_exNumID));
-    saveas(f, sprintf('%s/fig/%s_%d_Histgram(Dx).fig', outDir, imageNameList{imageID}, shown_exNumID));
+    saveas(f, sprintf('%s/figs/%s_%d_Histgram(Dx).fig', outDir, imageNameList{imageID}, shown_exNumID));
     % close(f)
 end

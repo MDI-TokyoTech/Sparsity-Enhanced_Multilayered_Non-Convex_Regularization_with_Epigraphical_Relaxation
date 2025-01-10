@@ -1,6 +1,6 @@
 # Sparsity-Enhanced Multilayered Non-Convex Regularization with Epigraphical Relaxation for Debiased Signal Recovery
 
-This is demo programs for epigraphically-relaxed linearly-involved generalized Moreau-enhanced model (ER-LiGME model) proposed in the following reference:
+These are demo programs for the epigraphically-relaxed linearly-involved generalized Moreau-enhanced model (ER-LiGME model) proposed in the following reference:
 
 A. Katsuma, S. Kyochi, S. Ono, I. Selesnick, "Sparsity-Enhanced Multilayered Non-Convex Regularization with Epigraphical Relaxation for Debiased Signal Recovery", 2024.
 

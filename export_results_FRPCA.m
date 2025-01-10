@@ -29,7 +29,14 @@ destDir = executeMfilename; % output folder name
 timeStr = extractBetween(sourceDir, strlength(sourceDir)-9, strlength(sourceDir));
 dayStr = extractBetween(sourceDir, strlength(sourceDir)-18, strlength(sourceDir)-11);
 outDir = sprintf("output/%s/%s/%s", destDir, dayStr{1}, timeStr{1});
-mkdir(sprintf("%s/figs", outDir));
+if ~exist(sprintf("%s/figs", outDir), "dir")
+    mkdir(sprintf("%s/figs", outDir));
+end
+for imageID = 1:imageNum
+    if ~exist(sprintf("%s/images/%s", outDir, ModifiedImageNameList{imageID}), "dir")
+        mkdir(sprintf("%s/images/%s", outDir, ModifiedImageNameList{imageID}));
+    end
+end
 
 if shown_lambdaID < 0
     shown_lambdaID = median(best_lambda_idx_PSNR(:, 4));
