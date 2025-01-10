@@ -29,6 +29,9 @@ For more details, see the following
  - for principal component analysis of shifted signals:
    - demo_FRPCA.m
 
+**Note
+When downloading this code as a zip file, if you encounter the error '0x80010135: Path too long,' please use 7-Zip to extract the files or shorten the zip filename.
+
 ## Citation
 If you use this code, please cite the following paper:
 ```
