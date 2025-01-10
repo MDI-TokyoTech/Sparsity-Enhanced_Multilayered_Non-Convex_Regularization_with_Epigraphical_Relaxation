@@ -11,14 +11,14 @@ For more details, see the following
 ## How to use
 
 **1) Prepare test images**
- - Place image files in the /images directory.
+ - Place image files in the `/images` directory.
  - Example: [The Berkeley Segmentation Dataset](https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/)
 
 **2) Setting parameters**
  - Set the path to target image files
  - Set the strength of noise
- - Adjust the regularization parameter
-   - Details for each parameter are provided in the comments.
+ - Adjust the regularization parameters
+   - Details for each parameter are explained in the code comments and the referenced paper.
 
 **3) Run demo_*.m**
  - image denoising: 
