@@ -14,7 +14,7 @@ For more details, see the following
  - Place image files in the `/images` directory.
  - Example: [The Berkeley Segmentation Dataset](https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/)
 
-**2) Setting parameters**
+**2) Edit parameters in demo_*.m**
  - Set the path to target image files
  - Set the strength of noise
  - Adjust the regularization parameters
