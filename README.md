@@ -21,13 +21,13 @@ For more details, see the following
    - Details for each parameter are explained in the code comments and the referenced paper.
 
 **3) Run demo_*.m**
- - image denoising: 
-     demo_denoising.m
- - compressed image sensing reconstruction:
-     demo_CSR.m, 
-     demo_CSR_single.m (single precision)
- - principal component analysis of shifted signals:
-     demo_FRPCA.m
+ - for image denoising: 
+   - demo_denoising.m
+ - for compressed image sensing reconstruction:
+   - demo_CSR.m, 
+   - demo_CSR_single.m (single precision)
+ - for principal component analysis of shifted signals:
+   - demo_FRPCA.m
 
 ## Citation
 If you use this code, please cite the following paper:
