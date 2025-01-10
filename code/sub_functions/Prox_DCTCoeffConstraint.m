@@ -1,0 +1,9 @@
+function y = Prox_DCTCoeffConstraint(x,Q,QX,TC)
+% y = x;
+Ty = round((TC*x*TC')./Q);
+y = Ty.*Q;
+U = QX.*Q + 1/2*Q;
+L = QX.*Q - 1/2*Q;
+y(Ty>QX) = U(Ty>QX);
+y(Ty<QX) = L(Ty<QX);
+y = TC'*y*TC;
