@@ -73,7 +73,7 @@ for imageID = 1:imageNum
 end
 
 if shown_muID == -1
-    shown_muID = median(best_mu_idx_PSNR(:, 6));
+    shown_muID = round(median(best_mu_idx_PSNR(:, 6)));
 end
 fprintf("shown results for mu = %.3f\n", range_mu(shown_muID));
 
@@ -203,7 +203,7 @@ for imageID = 1:imageNum
     hold off
     xlabel("\mu")
     ylabel("PSNR")
-    ylim([15, 35]);
+    ylim([15, 40]);
     title(imageNameList{imageID});
 end
 lgd = legend(methodNameModified,'interpreter','none');
