@@ -39,7 +39,7 @@ for imageID = 1:imageNum
 end
 
 if shown_lambdaID < 0
-    shown_lambdaID = median(best_lambda_idx_PSNR(:, 4));
+    shown_lambdaID = round(median(best_lambda_idx_PSNR(:, 4)));
 end
 shown_lambda1ID = ceil( shown_lambdaID / length(range_lambda2) );
 shown_lambda2ID = mod(shown_lambdaID, length(range_lambda2)) + 1;
