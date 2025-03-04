@@ -25,6 +25,7 @@ For more details, see the following
 **3) Run demo_*.m**
  - for image denoising: 
    - demo_denoising.m
+   - demo_denoising_single.m (single precision)
  - for compressed image sensing reconstruction:
    - demo_CSR.m, 
    - demo_CSR_single.m (single precision)
