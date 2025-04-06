@@ -265,8 +265,8 @@ subplot(122), meshz(u_obsv), zlim([-0.15 1.15]), title('observed');
 %--------------------
 % define function
 %--------------------
-methodFunc{1} = @(p, ref) SRPCA_LiGME(u_obsv, p, u_org, false, [0,1]); % not enhanced NN
-methodFunc{2} = @(p, ref) SRPCA_LiGME(u_obsv, p, u_org, true, [0,1]); % enhanced NN
+methodFunc{1} = @(p, ref) SRPCA_LiGME_enhanceL1ball(u_obsv, p, u_org, false, [0,1]); % not enhanced NN
+methodFunc{2} = @(p, ref) SRPCA_LiGME_enhanceL1ball(u_obsv, p, u_org, true, [0,1]); % enhanced NN
 methodFunc{3} = @(p, ref) FRPCA_ERLiGME_rangeConstraint(u_obsv, p, u_org, false, [0,1]); % not enhanced ASNN
 methodFunc{4} = @(p, ref) FRPCA_ERLiGME_rangeConstraint(u_obsv, p, u_org, true, [0,1], ref(:,:,1,3)); % enhanced ASNN
 
